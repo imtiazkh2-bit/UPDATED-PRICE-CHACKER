@@ -1,0 +1,73 @@
+name: Build APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Install packages
+        run: npm install
+
+      - name: Prepare app files
+        run: |
+          mkdir -p www
+          if [ ! -f www/index.html ]; then
+            if [ -f index.html ] && grep -q "initStorage" index.html; then
+              echo "www/index.html not found - using index.html from the repo root"
+              cp index.html www/index.html
+            else
+              echo "ERROR: www/index.html is missing. Upload the www folder (it must contain index.html)."
+              exit 1
+            fi
+          fi
+          cp node_modules/@zxing/library/umd/index.min.js www/zxing.min.js
+          ls -la www
+
+      - name: Create Android project
+        run: npx cap add android
+
+      - name: Add camera permission and app icon
+        run: |
+          sed -i 's#<uses-permission android:name="android.permission.INTERNET" />#&\n    <uses-permission android:name="android.permission.CAMERA" />\n    <uses-feature android:name="android.hardware.camera" android:required="false" />#' android/app/src/main/AndroidManifest.xml
+          for d in android/app/src/main/res/mipmap-*dpi; do
+            cp icon.png "$d/ic_launcher.png"
+            cp icon.png "$d/ic_launcher_round.png"
+            cp icon.png "$d/ic_launcher_foreground.png"
+          done
+          rm -rf android/app/src/main/res/mipmap-anydpi-v26
+          grep -n "CAMERA" android/app/src/main/AndroidManifest.xml
+
+      - name: Sync app files
+        run: npx cap sync android
+
+      - name: Use fixed signing key (so future updates install over the old app)
+        run: |
+          mkdir -p ~/.android
+          cp debug.keystore ~/.android/debug.keystore
+
+      - name: Build APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Save APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: price-checker-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
