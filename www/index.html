@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#2563eb">
+<title>Barcode Price Checker</title>
+<style>
+:root{--navh:62px;--sb:env(safe-area-inset-bottom,0px);--st:env(safe-area-inset-top,0px)}
+[data-theme=light]{--bg:#f3f5fa;--card:#fff;--tx:#0f172a;--mu:#64748b;--bd:#e2e8f0;--pr:#2563eb;--prtx:#fff;--sell:#15803d;--buy:#c2410c;--inp:#fff;--bad:#dc2626;--good:#16a34a;--nav:#fff;--soft:#eef2ff;--hd:#2563eb}
+[data-theme=dark]{--bg:#0b1220;--card:#162032;--tx:#f1f5f9;--mu:#94a3b8;--bd:#263449;--pr:#3b82f6;--prtx:#fff;--sell:#4ade80;--buy:#fb923c;--inp:#0f1a2b;--bad:#f87171;--good:#4ade80;--nav:#111a2b;--soft:#1b2a44;--hd:#111a2b}
+[data-theme=colorful]{--bg:linear-gradient(135deg,#ff9a9e 0%,#fbc2eb 25%,#a18cd1 60%,#5ee7df 100%);--card:rgba(255,255,255,.9);--tx:#2d1b69;--mu:#6b5b95;--bd:rgba(124,58,237,.28);--pr:#7c3aed;--prtx:#fff;--sell:#059669;--buy:#e11d48;--inp:#fff;--bad:#e11d48;--good:#059669;--nav:rgba(255,255,255,.94);--soft:rgba(124,58,237,.12);--hd:linear-gradient(90deg,#7c3aed,#ec4899)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg) fixed;color:var(--tx);min-height:100vh;font-size:16px}
+h1,h2,h3{margin:0}
+h2{font-size:1.1rem}
+button,input,select,textarea{font:inherit;color:inherit}
+input,select,textarea{width:100%;padding:12px;border:1.5px solid var(--bd);border-radius:10px;background:var(--inp);outline:none;min-width:0}
+input:focus,select:focus,textarea:focus{border-color:var(--pr);box-shadow:0 0 0 3px color-mix(in srgb,var(--pr) 25%,transparent)}
+input.err{border-color:var(--bad)}
+.btn{background:var(--pr);color:var(--prtx);border:0;border-radius:10px;padding:12px 16px;font-weight:600;cursor:pointer;white-space:nowrap}
+.btn:active{transform:scale(.98)}
+.btn.ghost{background:var(--soft);color:var(--tx)}
+.btn.danger{background:var(--bad);color:#fff}
+.btn.danger-t{background:transparent;color:var(--bad);border:1.5px solid var(--bad)}
+.btn.sm{padding:6px 10px;font-size:.85rem}
+.btn.wide{width:100%}
+.btn.big{width:100%;padding:15px;font-size:1.1rem}
+.btn:disabled{opacity:.5}
+.ic{background:rgba(255,255,255,.18);border:0;border-radius:10px;font-size:1.2rem;padding:6px 10px;cursor:pointer;color:#fff}
+.mu{color:var(--mu)}
+.row{display:flex;gap:8px;align-items:center}
+.row.wrap{flex-wrap:wrap}.row.between{justify-content:space-between}.row.end{justify-content:flex-end;margin-top:14px}
+.row>label{flex:1}
+.top{position:sticky;top:0;z-index:30;background:var(--hd);color:#fff;display:flex;justify-content:space-between;align-items:center;padding:calc(10px + var(--st)) 14px 10px}
+.top h1{font-size:1.15rem}
+main{max-width:780px;margin:0 auto;padding:12px 12px calc(var(--navh) + var(--sb) + 90px)}
+.page{display:none}.page.active{display:block}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:14px;margin-bottom:12px;backdrop-filter:blur(6px)}
+.card h2{margin-bottom:8px}
+.card p{margin:6px 0}
+#nav{position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--nav);border-top:1px solid var(--bd);display:flex;padding-bottom:var(--sb);backdrop-filter:blur(8px)}
+#nav button{flex:1;background:none;border:0;padding:8px 2px 7px;font-size:.68rem;color:var(--mu);display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;min-height:var(--navh)}
+#nav button span{font-size:1.35rem;line-height:1}
+#nav button.on{color:var(--pr);font-weight:700}
+.seg{display:flex;background:var(--card);border:1.5px solid var(--bd);border-radius:14px;padding:4px;margin-bottom:12px;gap:4px}
+.seg button{flex:1;border:0;background:transparent;padding:12px 4px;border-radius:10px;font-weight:700;font-size:.9rem;cursor:pointer;color:var(--mu)}
+.seg button.on{background:var(--pr);color:var(--prtx)}
+.seg.t3 button{padding:10px 6px}
+.result{min-height:190px;display:flex;align-items:center;justify-content:center;text-align:center}
+.res{width:100%}
+.iname{font-size:1.25rem;font-weight:600;word-break:break-word}
+.code{color:var(--mu);font-family:ui-monospace,monospace;font-size:.9rem;margin:2px 0 10px;word-break:break-all}
+.pbox{margin:8px 0}
+.pbox .lbl{display:block;font-size:.8rem;letter-spacing:.12em;color:var(--mu);font-weight:700}
+.pbox .big{display:block;font-weight:900;font-size:clamp(46px,15vw,92px);line-height:1.05;word-break:break-word}
+.pbox.sell .big{color:var(--sell)}.pbox.buy .big{color:var(--buy)}
+.res.both .pbox .big{font-size:clamp(34px,11vw,60px)}
+.profit{margin-top:6px;font-weight:700}
+.profit.neg{color:var(--bad)}.profit.pos{color:var(--good)}
+.nfmsg{font-size:2rem;font-weight:800;color:var(--bad)}
+.empty{color:var(--mu);padding:20px;text-align:center}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chip{background:var(--soft);border:0;border-radius:99px;padding:7px 12px;font-size:.85rem;cursor:pointer}
+.camslot[hidden]{display:none}
+.camslot{margin-top:10px}
+.camslot.sticky{position:sticky;top:calc(48px + var(--st));z-index:20;margin:0 0 10px}
+.cam{position:relative;border-radius:14px;overflow:hidden;background:#000;aspect-ratio:16/10;max-height:240px;width:100%}
+.cam video{width:100%;height:100%;object-fit:cover;display:block}
+.aim{position:absolute;inset:18% 8%;border:2px solid rgba(255,255,255,.9);border-radius:12px;box-shadow:0 0 0 999px rgba(0,0,0,.28)}
+.aim:after{content:"";position:absolute;left:4%;right:4%;top:50%;height:2px;background:#ef4444;box-shadow:0 0 8px #ef4444}
+.camtools{position:absolute;top:8px;right:8px;display:flex;gap:6px}
+.camstat{position:absolute;left:0;right:0;bottom:0;padding:6px 10px;background:rgba(0,0,0,.55);color:#fff;font-size:.8rem;text-align:center}
+.cam.flash{outline:4px solid #22c55e;outline-offset:-4px}
+.ehead{display:none}
+.erow{display:grid;grid-template-columns:26px 1fr 1fr 1fr 34px;grid-template-areas:"rn b b b x" "n n p s s" "tag tag tag tag tag";gap:6px;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:8px;margin-bottom:8px}
+.erow .rn{grid-area:rn;color:var(--mu);font-size:.8rem;text-align:center;align-self:center}
+.erow [data-f=b]{grid-area:b;font-family:ui-monospace,monospace}
+.erow [data-f=n]{grid-area:n}.erow [data-f=p]{grid-area:p}.erow [data-f=s]{grid-area:s}
+.erow .x{grid-area:x;border:0;background:transparent;color:var(--bad);font-size:1.1rem;cursor:pointer}
+.erow .tag{grid-area:tag;font-size:.72rem;font-weight:700}
+.erow .tag:empty{display:none}
+.erow.err{border-color:var(--bad)}
+.erow.hl{box-shadow:0 0 0 3px var(--pr)}
+.tag.new{color:var(--good)}.tag.upd{color:var(--pr)}.tag.dup{color:var(--bad)}
+.entrybar{position:sticky;bottom:calc(var(--navh) + var(--sb) + 8px);z-index:25;margin-top:10px}
+.entrybar .btn{box-shadow:0 4px 14px rgba(0,0,0,.25)}
+@media(min-width:720px){
+ .ehead{display:grid;grid-template-columns:30px 1.3fr 2fr 1fr 1fr 34px;gap:6px;padding:0 8px 4px;color:var(--mu);font-size:.8rem;font-weight:700}
+ .erow{grid-template-columns:30px 1.3fr 2fr 1fr 1fr 34px;grid-template-areas:"rn b n p s x" ". tag tag tag tag tag";gap:6px 6px}
+}
+.chk{display:flex;gap:10px;align-items:flex-start;margin:8px 0;cursor:pointer}
+.chk input{width:22px;height:22px;margin:0;flex:none}
+.tip{background:var(--soft);padding:8px 10px;border-radius:10px;font-size:.85rem;margin-top:8px;color:var(--mu)}
+.item{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:11px 4px;border-bottom:1px solid var(--bd);cursor:pointer}
+.item:last-child{border:0}
+.item .il{min-width:0}.item .il b{display:block;overflow:hidden;text-overflow:ellipsis}
+.item small{color:var(--mu);font-family:ui-monospace,monospace}
+.item .ir{text-align:right;font-weight:700;white-space:nowrap;font-size:.9rem}
+.sellc{color:var(--sell)}.buyc{color:var(--buy)}
+label.f{display:block;font-size:.85rem;color:var(--mu);margin:10px 0 4px;font-weight:600}
+.setrow{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--bd)}
+.setrow:last-child{border:0}
+.setrow small{display:block;color:var(--mu)}
+.sw{position:relative;width:52px;height:30px;flex:none}
+.sw input{opacity:0;width:100%;height:100%;position:absolute;margin:0;cursor:pointer;z-index:2}
+.sw span{position:absolute;inset:0;background:#94a3b8;border-radius:99px;transition:.2s}
+.sw span:after{content:"";position:absolute;left:3px;top:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:.2s}
+.sw input:checked+span{background:var(--pr)}
+.sw input:checked+span:after{transform:translateX(22px)}
+.stat{display:flex;gap:10px;margin-bottom:10px}
+.stat div{flex:1;background:var(--soft);border-radius:12px;padding:10px;text-align:center}
+.stat b{display:block;font-size:1.4rem}
+.banner{background:#fef3c7;color:#78350f;padding:10px 14px;font-size:.9rem;display:flex;gap:10px;align-items:center;justify-content:space-between}
+.banner.bad{background:#fee2e2;color:#7f1d1d}
+.msg{margin-top:8px;font-size:.9rem}.msg.bad{color:var(--bad)}.msg.good{color:var(--good)}
+table.pv{width:100%;border-collapse:collapse;font-size:.82rem;margin-top:8px}
+table.pv td,table.pv th{border-bottom:1px solid var(--bd);padding:5px 4px;text-align:left;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+table.pv tr.skip td{color:var(--bad);text-decoration:line-through}
+.pvwrap{overflow-x:auto}
+.login{position:fixed;inset:0;z-index:100;background:var(--bg) fixed;display:flex;align-items:center;justify-content:center;padding:20px}
+.login .card{width:100%;max-width:380px;padding:22px}
+.login h1{text-align:center;font-size:1.5rem;margin-bottom:4px}
+#toasts{position:fixed;left:0;right:0;top:calc(56px + var(--st));z-index:300;display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none;padding:0 12px}
+.toast{background:#0f172a;color:#fff;padding:10px 16px;border-radius:12px;font-size:.9rem;box-shadow:0 6px 20px rgba(0,0,0,.3);max-width:100%;transition:opacity .4s}
+.toast.bad{background:#b91c1c}.toast.out{opacity:0}
+.modal-wrap{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal{background:var(--card);background-color:var(--inp);color:var(--tx);border-radius:16px;padding:18px;width:100%;max-width:420px;max-height:90vh;overflow:auto}
+.modal h3{margin-bottom:8px}
+.modal .btnrow{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin-top:14px}
+.dz{border:2px dashed var(--bd);border-radius:14px;padding:22px;text-align:center;cursor:pointer}
+.dz.over{border-color:var(--pr);background:var(--soft)}
+
+.phimg{width:100%;max-height:190px;object-fit:cover;border-radius:12px;margin-bottom:6px}
+.phitem{border-top:1px solid var(--bd);padding:10px 0}
+.phlab{font-size:.9rem;color:var(--mu);margin-bottom:2px}
+.cand{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;text-align:left;background:var(--soft);border:2px solid transparent;border-radius:10px;padding:10px;margin-top:6px;cursor:pointer;color:var(--tx)}
+.cand.on{border-color:var(--pr)}
+.cand .pp{text-align:right;white-space:nowrap}
+.cand .pp b{font-size:1.15rem}
+.ptotal{font-size:1.15rem;font-weight:800;text-align:center;padding:12px;background:var(--soft);border-radius:12px;margin-top:8px;line-height:1.5}
+.stepper{display:flex;align-items:center;gap:8px;margin-top:6px}
+.stepper button{width:34px;height:34px;border-radius:10px;border:0;background:var(--soft);font-size:1.2rem;cursor:pointer;color:var(--tx)}
+.stepper span{min-width:44px;text-align:center;font-weight:700}
+</style>
+</head>
+<body>
+
+<div id="toasts"></div>
+
+<!-- LOGIN -->
+<div id="login" class="login" hidden>
+  <div class="card">
+    <h1>🏷️ Price Checker</h1>
+    <p class="mu" style="text-align:center;margin-top:0">Please log in</p>
+    <label class="f" for="lu">Username</label>
+    <input id="lu" autocomplete="username" autocapitalize="none" spellcheck="false">
+    <label class="f" for="lp">Password</label>
+    <input id="lp" type="password" autocomplete="current-password">
+    <label class="chk" style="margin-top:10px"><input type="checkbox" id="lshow"> Show password</label>
+    <div id="lerr" class="msg bad"></div>
+    <button class="btn big" id="lgo" style="margin-top:10px">Log in</button>
+    <p style="text-align:center;margin-top:14px"><a href="#" id="forgot" style="color:var(--pr)">Forgot password?</a></p>
+    <p class="mu" style="text-align:center;font-size:.8rem" id="lhint"></p>
+    <input type="file" id="forgotFile" accept=".json,application/json" hidden>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" hidden>
+  <header class="top">
+    <h1>🏷️ Price Checker</h1>
+    <div class="row"><button class="ic" id="qTheme" title="Change theme">🎨</button><button class="ic" id="qFs" title="Full screen">⛶</button></div>
+  </header>
+  <div id="banner"></div>
+
+  <main>
+    <!-- SCAN -->
+    <section class="page" id="p-scan">
+      <div class="seg t3" id="modeSeg">
+        <button data-m="sell">💰 Sell Price</button>
+        <button data-m="buy">🛒 Purchase</button>
+        <button data-m="both">📊 Both</button>
+      </div>
+      <div class="card">
+        <div class="row">
+          <input id="scanIn" placeholder="Scan or type barcode" autocomplete="off" autocapitalize="none" spellcheck="false" enterkeyhint="search">
+          <button class="btn" id="goBtn">Go</button>
+        </div>
+        <button class="btn ghost wide" id="camBtn" style="margin-top:8px">📷 Scan with phone camera</button>
+        <div class="camslot" id="camScan" hidden></div>
+        <button class="btn ghost wide" id="photoBtn" style="margin-top:8px" hidden>🖼 Price by photo (AI)</button>
+        <div class="camslot" id="camPhoto" hidden></div>
+      </div>
+      <div class="card result" id="result"></div>
+      <div class="card" id="photoRes" hidden></div>
+      <div id="recentWrap" class="card" hidden><h2>Recent</h2><div class="chips" id="recent"></div></div>
+    </section>
+
+    <!-- ENTRY -->
+    <section class="page" id="p-entry">
+      <div class="card">
+        <div class="row between"><h2>📝 Data Entry</h2><span id="rowCount" class="mu"></span></div>
+        <label class="chk"><input type="checkbox" id="scanFirst"><span><b>Scan-first mode</b><br><small class="mu">Scan many barcodes in a row (each makes a new row). Fill names &amp; prices afterwards.</small></span></label>
+        <div class="row wrap">
+          <button class="btn" id="eCam">📷 Camera scan</button>
+          <button class="btn ghost" id="addRow">＋ Row</button>
+          <button class="btn ghost" id="add10">＋ 10 Rows</button>
+          <button class="btn danger-t" id="clearRows">Clear</button>
+        </div>
+        <div class="tip">Flow: scan barcode → <b>Enter</b> → name → <b>Enter</b> → purchase → <b>Enter</b> → sell → <b>Enter</b> → next row. Your draft is saved automatically until you press Save.</div>
+      </div>
+      <div class="camslot sticky" id="camEntry" hidden></div>
+      <div class="ehead"><span>#</span><span>Barcode</span><span>Name</span><span>Purchase</span><span>Sell</span><span></span></div>
+      <div id="erows"></div>
+      <div class="entrybar"><button class="btn big" id="saveEntry">💾 Save all items</button></div>
+    </section>
+
+    <!-- ITEMS -->
+    <section class="page" id="p-items">
+      <div class="card">
+        <h2>📦 Saved items</h2>
+        <div class="row"><input id="isearch" placeholder="Search name or barcode…" type="search"><select id="isort" style="width:auto"><option value="new">Newest</option><option value="name">Name</option><option value="code">Barcode</option></select></div>
+        <div class="row between" style="margin-top:8px"><span class="mu" id="icount"></span><button class="btn sm ghost" id="addNew">＋ Add items</button></div>
+      </div>
+      <div class="card" style="padding:6px 12px"><div id="ilist"></div><button class="btn ghost wide" id="moreBtn" hidden style="margin:8px 0">Show more</button></div>
+    </section>
+
+    <!-- IMPORT -->
+    <section class="page" id="p-import">
+      <div class="card">
+        <h2>📥 Import from Excel / CSV</h2>
+        <p class="mu">Columns in this order: <b>Barcode · Item name · Purchase price · Sell price</b>. Save your Excel file as <b>.xlsx</b> (or CSV) and select it here.</p>
+        <div class="dz" id="dz">Tap to choose file (.xlsx / .csv)<br><small class="mu">or drop it here</small></div>
+        <input type="file" id="impFile" accept=".xlsx,.csv,.tsv,.txt" hidden>
+        <p class="mu" style="margin-bottom:4px">Or paste rows copied from Excel:</p>
+        <textarea id="impPaste" rows="3" placeholder="Paste here…"></textarea>
+        <div class="row" style="margin-top:8px"><button class="btn ghost" id="impPasteGo">Read pasted rows</button><button class="btn ghost" id="tplBtn">Download template</button></div>
+        <div class="tip">Tip: in Excel format the barcode column as <b>Text</b> so long barcodes and leading zeros are kept.</div>
+      </div>
+      <div class="card" id="impPrev" hidden></div>
+    </section>
+
+    <!-- BACKUP -->
+    <section class="page" id="p-backup">
+      <div class="card">
+        <h2>💾 Backup &amp; Restore</h2>
+        <div class="stat"><div><b id="bkCount">0</b>items</div><div><b id="bkLast">never</b>last backup</div></div>
+        <button class="btn big" id="bkNow">⬇ Download backup now</button>
+        <button class="btn ghost wide" id="bkShare" style="margin-top:8px" hidden>📤 Share backup (Drive / WhatsApp…)</button>
+        <p class="mu">Keep the backup file somewhere safe (Google Drive, email to yourself, PC). Clearing browser data erases the app's data — the backup file is what saves you.</p>
+      </div>
+      <div class="card">
+        <h2>♻ Restore from backup file</h2>
+        <button class="btn ghost wide" id="bkRestore">Choose backup file…</button>
+        <input type="file" id="bkFile" accept=".json,application/json" hidden>
+      </div>
+      <div class="card">
+        <h2>🕘 Automatic safety copies</h2>
+        <p class="mu" style="margin-top:0">A copy of your data is kept inside the app before every save, import, restore or delete (last 3).</p>
+        <div id="snaps"></div>
+      </div>
+      <div class="card">
+        <h2>📄 Export</h2>
+        <button class="btn ghost wide" id="expCsv">Export all items to CSV (opens in Excel)</button>
+      </div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="page" id="p-settings">
+      <div class="card">
+        <h2>🎨 Appearance</h2>
+        <div class="seg t3" id="themeSeg"><button data-t="light">☀ Light</button><button data-t="dark">🌙 Dark</button><button data-t="colorful">🌈 Colorful</button></div>
+        <div class="setrow"><div>Full screen<small>Hide browser bars</small></div><label class="sw"><input type="checkbox" id="s-fs"><span></span></label></div>
+        <div class="setrow"><div>Currency symbol</div><input id="s-cur" style="width:90px" maxlength="6"></div>
+      </div>
+      <div class="card">
+        <h2>🔍 Scanning</h2>
+        <div class="setrow"><div>Beep sound</div><label class="sw"><input type="checkbox" id="s-sound"><span></span></label></div>
+        <div class="setrow"><div>Vibrate</div><label class="sw"><input type="checkbox" id="s-vib"><span></span></label></div>
+        <div class="setrow"><div>Keep camera open after scan<small>Scan item after item without reopening</small></div><label class="sw"><input type="checkbox" id="s-keep"><span></span></label></div>
+        <div class="setrow"><div>Camera</div><select id="s-face" style="width:auto"><option value="environment">Back</option><option value="user">Front</option></select></div>
+        <div class="setrow"><div>Auto-hide price<small>Hide the result after some seconds (privacy)</small></div><select id="s-hide" style="width:auto"><option value="0">Off</option><option value="5">5 s</option><option value="10">10 s</option><option value="30">30 s</option></select></div>
+      </div>
+      <div class="card">
+        <h2>🖼 Price by photo (optional)</h2>
+        <p class="mu" style="margin-top:0">Point the camera at one or many items without a barcode — AI recognises them and the app looks up their prices. Needs internet and your own Anthropic API key (console.anthropic.com → API Keys; it is billed separately from the Claude app). The photo is sent to Anthropic for analysis; the key stays only on this phone.</p>
+        <div class="setrow"><div>Enable “Price by photo”<small>Adds a button on the Scan tab</small></div><label class="sw"><input type="checkbox" id="s-photo"><span></span></label></div>
+        <label class="f">API key</label><input id="s-key" type="password" autocomplete="off" placeholder="sk-ant-…">
+        <label class="chk" style="margin-top:6px"><input type="checkbox" id="s-keyshow"> Show key</label>
+        <label class="f">AI model</label>
+        <select id="s-model"><option value="claude-haiku-5-5">Haiku 5.5 – fastest, lowest cost</option><option value="claude-sonnet-5-5">Sonnet 5.5 – more accurate</option></select>
+      </div>
+      <div class="card">
+        <h2>🔐 Login</h2>
+        <label class="f">Current password</label><input id="a-cur" type="password" autocomplete="current-password">
+        <label class="f">New username</label><input id="a-user" autocomplete="off" autocapitalize="none">
+        <label class="f">New password (leave empty to keep the same)</label><input id="a-new" type="password" autocomplete="new-password">
+        <label class="f">Confirm new password</label><input id="a-con" type="password" autocomplete="new-password">
+        <div id="a-msg" class="msg"></div>
+        <button class="btn wide" id="a-save" style="margin-top:10px">Update login</button>
+        <button class="btn ghost wide" id="logout" style="margin-top:8px">Log out</button>
+      </div>
+      <div class="card">
+        <h2>⚠ Danger zone</h2>
+        <button class="btn danger-t wide" id="wipe">Delete ALL items</button>
+        <p class="mu" id="storeNote"></p>
+      </div>
+    </section>
+  </main>
+
+  <nav id="nav">
+    <button data-p="scan"><span>📷</span>Scan</button>
+    <button data-p="entry"><span>📝</span>Entry</button>
+    <button data-p="items"><span>📦</span>Items</button>
+    <button data-p="import"><span>📥</span>Import</button>
+    <button data-p="backup"><span>💾</span>Backup</button>
+    <button data-p="settings"><span>⚙️</span>Settings</button>
+  </nav>
+</div>
+
+<script>
+(()=>{
+'use strict';
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const nb=s=>String(s??'').replace(/\s+/g,'');
+
+/* ---------- storage ---------- */
+/* Small settings -> localStorage. Big data (items, safety copies, draft) -> IndexedDB (hundreds of MB, no 5 MB limit). */
+const mem={}; let storageOK=true, idb=null;
+const BIG=new Set(['bp_items','bp_snaps','bp_draft']);
+const idbOpen=()=>new Promise(res=>{try{if(!window.indexedDB)return res(null);const r=indexedDB.open('pricechecker',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>res(r.result);r.onerror=()=>res(null);r.onblocked=()=>res(null)}catch(e){res(null)}});
+const idbPut=(k,v)=>new Promise(res=>{if(!idb)return res(false);try{const tx=idb.transaction('kv','readwrite');tx.objectStore('kv').put(v,k);tx.oncomplete=()=>res(true);tx.onerror=tx.onabort=()=>res(false)}catch(e){res(false)}});
+const idbLoad=()=>new Promise(res=>{if(!idb)return res();try{const tx=idb.transaction('kv','readonly'),rq=tx.objectStore('kv').openCursor();rq.onsuccess=()=>{const c=rq.result;if(c){mem[c.key]=c.value;c.continue()}};tx.oncomplete=()=>res();tx.onerror=tx.onabort=()=>res()}catch(e){res()}});
+const lsSet=(k,v,quiet)=>{try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){if(!quiet)storageOK=false;return false}};
+const store={
+  get(k,d){
+    if(k in mem)return mem[k];
+    if(!BIG.has(k)||!idb){try{const v=localStorage.getItem(k);if(v!==null)return JSON.parse(v)}catch(e){}}
+    return d},
+  set(k,v,quiet){
+    mem[k]=v;
+    if(BIG.has(k)&&idb){idbPut(k,v).then(ok=>{if(!ok&&!quiet){storageOK=false;ui.toast('⚠ Could not save data (storage full?). Download a backup NOW.',true)}});return true}
+    return lsSet(k,v,quiet)}
+};
+try{localStorage.setItem('bp_t','1');localStorage.removeItem('bp_t')}catch(e){storageOK=false}
+async function initStorage(){
+  idb=await idbOpen();await idbLoad();
+  for(const k of BIG){
+    try{
+      const raw=localStorage.getItem(k);
+      if(raw===null)continue;
+      if(k in mem){localStorage.removeItem(k);continue}          // already in IndexedDB
+      if(idb){mem[k]=JSON.parse(raw);if(await idbPut(k,mem[k]))localStorage.removeItem(k)} // move old data over
+    }catch(e){}
+  }
+}
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+
+/* ---------- state ---------- */
+const DEF={theme:'light',mode:'sell',cur:'Rs',sound:true,vibrate:true,facing:'environment',keepCam:true,autoHide:0,scanFirst:false,photoOn:false,photoModel:'claude-haiku-5-5'};
+let S=Object.assign({},DEF,store.get('bp_settings',{}));
+const saveS=()=>store.set('bp_settings',S);
+let items=new Map(),IDX=null;
+const loadItems=()=>{const a=store.get('bp_items',[]);items=new Map(a.map(o=>[o.b,o]))};
+const saveItems=()=>{IDX=null;const ok=store.set('bp_items',[...items.values()]);if(!ok)ui.toast('⚠ Browser storage is full/blocked! Download a backup NOW.',true);return ok};
+const num=v=>{v=String(v??'').trim();if(v==='')return null;if(/^\d+,\d{1,2}$/.test(v))v=v.replace(',','.');else v=v.replace(/,/g,'');const n=Number(v);return isFinite(n)&&n>=0?Math.round(n*10000)/10000:null};
+const fmt=n=>(S.cur?S.cur.trim()+' ':'')+Number(n).toLocaleString(undefined,{maximumFractionDigits:2});
+const fixBarcode=v=>{let s=String(v??'').trim();let m=/^="?(.*?)"?$/.exec(s);if(s.startsWith('='))s=m[1];s=s.replace(/^'/,'');if(/^\d+(\.\d+)?e\+?\d+$/i.test(s)){s=Number(s).toLocaleString('fullwide',{useGrouping:false})}else if(/^\d+\.0+$/.test(s))s=s.replace(/\.0+$/,'');return nb(s)};
+
+/* ---------- UI helpers ---------- */
+const ui={
+  toast(msg,bad){const t=document.createElement('div');t.className='toast'+(bad?' bad':'');t.textContent=msg;$('#toasts').appendChild(t);setTimeout(()=>t.classList.add('out'),2800);setTimeout(()=>t.remove(),3300)},
+  choice(title,html,buttons,input){return new Promise(res=>{
+    const w=document.createElement('div');w.className='modal-wrap';
+    w.innerHTML=`<div class="modal"><h3>${esc(title)}</h3><div>${html}</div>${input?`<input id="mi" placeholder="${esc(input)}" autocomplete="off" style="margin-top:10px">`:''}<div class="btnrow">${buttons.map((b,i)=>`<button class="btn ${b.cls||''}" data-i="${i}">${esc(b.label)}</button>`).join('')}</div></div>`;
+    document.body.appendChild(w);
+    const done=v=>{w.remove();res(v)};
+    w.addEventListener('click',e=>{const b=e.target.closest('[data-i]');if(b){const bt=buttons[+b.dataset.i];if(input&&bt.v&&$('#mi',w).value.trim()!==input){$('#mi',w).classList.add('err');return}done(bt.v)}else if(e.target===w)done(null)});
+    setTimeout(()=>{const i=$('#mi',w);i&&i.focus()},50)})},
+  confirm(msg,{ok='OK',danger=false,title='Please confirm',input=null}={}){return ui.choice(title,msg,[{label:'Cancel',cls:'ghost',v:null},{label:ok,cls:danger?'danger':'',v:true}],input).then(v=>!!v)}
+};
+let actx;
+function beep(ok=true){
+  if(S.sound){try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();const o=actx.createOscillator(),g=actx.createGain();o.connect(g);g.connect(actx.destination);o.frequency.value=ok?1000:300;g.gain.value=.15;o.start();o.stop(actx.currentTime+(ok?.1:.25))}catch(e){}}
+  if(S.vibrate&&navigator.vibrate)navigator.vibrate(ok?40:[80,60,80]);
+}
+const isNative=()=>{const C=window.Capacitor;return !!(C&&C.isNativePlatform&&C.isNativePlatform()&&C.Plugins&&C.Plugins.Filesystem&&C.Plugins.Share)};
+async function nativeSave(name,blob){
+  try{
+    const data=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(',')[1]);r.onerror=rej;r.readAsDataURL(blob)});
+    const {Filesystem,Share}=window.Capacitor.Plugins;
+    const w=await Filesystem.writeFile({path:name,data,directory:'CACHE'});
+    await Share.share({title:name,url:w.uri,dialogTitle:'Save file (choose Drive / Files / WhatsApp…)'});
+  }catch(e){const m=String((e&&e.message)||e);if(!/cancel/i.test(m))ui.toast('Could not save file: '+m,true)}
+}
+function download(name,blob){
+  if(isNative()){nativeSave(name,blob);return}
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),5000)}
+const stamp=()=>{const d=new Date(),p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}`};
+
+/* ---------- theme ---------- */
+function applyTheme(){document.documentElement.dataset.theme=S.theme;const m=document.querySelector('meta[name=theme-color]');m.content={light:'#2563eb',dark:'#111a2b',colorful:'#7c3aed'}[S.theme]||'#2563eb';$$('#themeSeg button').forEach(b=>b.classList.toggle('on',b.dataset.t===S.theme))}
+function setTheme(t){S.theme=t;saveS();applyTheme()}
+$('#themeSeg').onclick=e=>{const b=e.target.closest('[data-t]');if(b)setTheme(b.dataset.t)};
+$('#qTheme').onclick=()=>{const o=['light','dark','colorful'];setTheme(o[(o.indexOf(S.theme)+1)%3])};
+
+/* ---------- full screen ---------- */
+function fsOn(){return !!(document.fullscreenElement||document.webkitFullscreenElement)}
+function fsToggle(){
+  if(fsOn()){(document.exitFullscreen||document.webkitExitFullscreen).call(document);return}
+  const el=document.documentElement,f=el.requestFullscreen||el.webkitRequestFullscreen;
+  if(!f){ui.toast('Full screen is not supported here. On iPhone: Share → Add to Home Screen.',true);$('#s-fs').checked=false;return}
+  Promise.resolve(f.call(el)).catch(()=>{ui.toast('Full screen was blocked by the browser',true);$('#s-fs').checked=false});
+}
+['fullscreenchange','webkitfullscreenchange'].forEach(ev=>document.addEventListener(ev,()=>{$('#s-fs').checked=fsOn()}));
+$('#qFs').onclick=fsToggle;$('#s-fs').onchange=fsToggle;
+
+/* ---------- auth ---------- */
+async function hash(pw,salt,alg){
+  const data=new TextEncoder().encode(salt+':'+pw);
+  if(alg==='s'&&window.crypto&&crypto.subtle){const h=await crypto.subtle.digest('SHA-256',data);return [...new Uint8Array(h)].map(b=>b.toString(16).padStart(2,'0')).join('')}
+  let h1=5381,h2=52711;for(const b of data){h1=(h1*33)^b;h2=(h2*33)^b}return (h1>>>0).toString(16)+(h2>>>0).toString(16);
+}
+async function mkAuth(u,p){const salt=Math.random().toString(36).slice(2)+Date.now().toString(36);const alg=(window.crypto&&crypto.subtle)?'s':'f';return {u,salt,alg,h:await hash(p,salt,alg)}}
+let memS=false;
+const sess={get(){try{return sessionStorage.getItem('bp_s')==='1'}catch(e){return memS}},set(v){memS=v;try{v?sessionStorage.setItem('bp_s','1'):sessionStorage.removeItem('bp_s')}catch(e){}}};
+let fails=0,lock=0;
+async function doLogin(){
+  const err=m=>$('#lerr').textContent=m;
+  if(Date.now()<lock){err(`Too many attempts. Wait ${Math.ceil((lock-Date.now())/1000)} s`);return}
+  const u=$('#lu').value.trim(),p=$('#lp').value,a=store.get('bp_auth',null);
+  if(a&&u.toLowerCase()===a.u.toLowerCase()&&await hash(p,a.salt,a.alg)===a.h){fails=0;sess.set(true);$('#lp').value='';err('');showApp()}
+  else{fails++;if(fails>=5){lock=Date.now()+30000;fails=0}err('Wrong username or password');beep(false)}
+}
+$('#lgo').onclick=doLogin;
+$('#lp').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});
+$('#lu').addEventListener('keydown',e=>{if(e.key==='Enter')$('#lp').focus()});
+$('#lshow').onchange=e=>{$('#lp').type=e.target.checked?'text':'password'};
+$('#forgot').onclick=async e=>{e.preventDefault();
+  const ok=await ui.confirm('Forgotten passwords cannot be recovered. If you have a <b>backup file</b>, you can restore it: your items <b>and the login saved in that backup</b> come back.<br><br>This replaces the data currently in this app.',{ok:'Choose backup file',title:'Forgot password'});
+  if(ok)$('#forgotFile').click()};
+$('#forgotFile').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
+  try{const o=await readBackupFile(f);if(!o.account){ui.toast('This backup has no login information',true);return}
+    applyBackup(o,{mode:'replace',account:true,settings:true});$('#lerr').textContent='';ui.toast('Restored. Log in with the login from that backup.');}
+  catch(err){ui.toast(err.message,true)}};
+function showLogin(){$('#app').hidden=true;$('#login').hidden=false;$('#lhint').textContent=store.get('bp_firstrun',true)?'First time? Default login: admin / admin (change it in Settings).':'';setTimeout(()=>$('#lu').focus(),50)}
+function showApp(){$('#login').hidden=true;$('#app').hidden=false;go('scan');if(store.get('bp_auth').u==='admin'&&!store.get('bp_pwchanged',false))ui.toast('Tip: change the default login in Settings → Login');}
+$('#logout').onclick=()=>{sess.set(false);Scanner.stop();$('#lu').value='';showLogin()};
+
+/* ---------- navigation ---------- */
+let page='scan';
+function go(p){
+  Scanner.stop();PhotoCam.stop();page=p;
+  $$('.page').forEach(x=>x.classList.toggle('active',x.id==='p-'+p));
+  $$('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.p===p));
+  if(p==='scan')focusScan(); if(p==='items')renderItems(); if(p==='backup')renderBackup(); if(p==='settings')renderSettings(); if(p==='entry')markAll();
+  renderBanner();window.scrollTo(0,0);
+}
+$('#nav').onclick=e=>{const b=e.target.closest('[data-p]');if(b)go(b.dataset.p)};
+document.addEventListener('visibilitychange',()=>{if(document.hidden){Scanner.stop();PhotoCam.stop()}});
+
+function renderBanner(){
+  const b=$('#banner');let h='';
+  if(!storageOK)h+=`<div class="banner bad"><span>⚠ This browser is blocking storage — data will NOT be kept. Open the app in a normal browser tab and back up often.</span></div>`;
+  const lb=store.get('bp_lastbk',0);
+  if(items.size&&(!lb||Date.now()-lb>7*864e5)){const d=lb?Math.floor((Date.now()-lb)/864e5)+' days ago':'never';h+=`<div class="banner"><span>💾 Last backup: <b>${d}</b></span><button class="btn sm" data-p="backup" id="bnBk">Backup</button></div>`}
+  b.innerHTML=h;const bk=$('#bnBk');if(bk)bk.onclick=()=>go('backup');
+}
+
+/* ---------- camera scanner ---------- */
+const FORMATS=['ean_13','ean_8','upc_a','upc_e','code_128','code_39','code_93','codabar','itf','qr_code','data_matrix'];
+function loadScript(u){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=u;s.onload=res;s.onerror=()=>rej(new Error('load'));document.head.appendChild(s)})}
+async function loadZX(){if(window.ZXing)return;try{await loadScript('zxing.min.js')}catch(e){await loadScript('https://unpkg.com/@zxing/library@0.19.1/umd/index.min.js')}}
+const Scanner={
+  slot:null,stream:null,det:null,zx:null,onCode:null,last:{c:'',t:0},timer:0,
+  status(t){const el=this.slot&&$('.camstat',this.slot);if(el)el.textContent=t},
+  fail(t){this.status(t);ui.toast(t,true)},
+  async start(slot,onCode){
+    this.stop();PhotoCam.stop();this.slot=slot;this.onCode=onCode;
+    slot.hidden=false;
+    slot.innerHTML=`<div class="cam"><video playsinline muted autoplay></video><div class="aim"></div><div class="camtools"><button class="btn sm ghost" data-cam="torch" hidden>🔦</button><button class="btn sm danger" data-cam="close">✕ Close</button></div><div class="camstat">Starting camera…</div></div>`;
+    const v=$('video',slot);
+    if(!window.isSecureContext||!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){this.fail('Camera needs a secure (https) page. Use a hardware scanner or type the barcode.');return}
+    try{this.stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:S.facing},width:{ideal:1280},height:{ideal:720}},audio:false})}
+    catch(e){this.fail(e&&e.name==='NotAllowedError'?'Camera permission denied. Allow camera access in the browser settings.':'Could not open the camera.');return}
+    if(this.slot!==slot){this.stream.getTracks().forEach(t=>t.stop());this.stream=null;return}
+    v.srcObject=this.stream;try{await v.play()}catch(e){}
+    try{const tr=this.stream.getVideoTracks()[0],caps=tr.getCapabilities&&tr.getCapabilities();if(caps&&caps.torch)$('[data-cam=torch]',slot).hidden=false}catch(e){}
+    if('BarcodeDetector' in window){
+      try{let f=FORMATS;if(BarcodeDetector.getSupportedFormats){const sup=await BarcodeDetector.getSupportedFormats();f=FORMATS.filter(x=>sup.includes(x))}
+        this.det=new BarcodeDetector({formats:f});this.status('Point the camera at a barcode');this.loop(v);return}catch(e){}
+    }
+    this.status('Loading scanner…');
+    try{await loadZX();if(this.slot!==slot)return;this.zx=new ZXing.BrowserMultiFormatReader();this.zx.decodeFromStream(this.stream,v,(r)=>{if(r)this.hit(r.getText())});this.status('Point the camera at a barcode')}
+    catch(e){this.fail('Camera scanning is not supported in this browser (try Chrome) — you can still type or use a hardware scanner.')}
+  },
+  loop(v){const tick=async()=>{if(!this.stream||!this.det)return;if(v.readyState>=2){try{const r=await this.det.detect(v);if(r.length)this.hit(r[0].rawValue)}catch(e){}}this.timer=setTimeout(tick,150)};tick()},
+  hit(code){code=nb(code);if(!code)return;const now=Date.now();if(code===this.last.c&&now-this.last.t<2000){this.last.t=now;return}this.last={c:code,t:now};
+    const cam=this.slot&&$('.cam',this.slot);if(cam){cam.classList.add('flash');setTimeout(()=>cam.classList.remove('flash'),350)}
+    this.onCode&&this.onCode(code)},
+  async torch(){try{const tr=this.stream.getVideoTracks()[0];this._t=!this._t;await tr.applyConstraints({advanced:[{torch:this._t}]})}catch(e){}},
+  stop(){clearTimeout(this.timer);if(this.zx){try{this.zx.reset()}catch(e){}this.zx=null}if(this.stream){this.stream.getTracks().forEach(t=>t.stop());this.stream=null}this.det=null;this._t=false;if(this.slot){this.slot.innerHTML='';this.slot.hidden=true;this.slot=null}}
+};
+document.addEventListener('click',e=>{const b=e.target.closest('[data-cam]');if(!b)return;if(b.dataset.cam==='close')Scanner.stop();else Scanner.torch()});
+
+/* ---------- SCAN page ---------- */
+let curCode='',curItem=null,hideT=0,recent=store.get('bp_recent',[]);
+function focusScan(){syncPhotoBtn();renderMode();renderResult();renderRecent();if(window.matchMedia&&matchMedia('(pointer:fine)').matches)setTimeout(()=>$('#scanIn').focus(),30)}
+function renderMode(){$$('#modeSeg button').forEach(b=>b.classList.toggle('on',b.dataset.m===S.mode))}
+$('#modeSeg').onclick=e=>{const b=e.target.closest('[data-m]');if(!b)return;S.mode=b.dataset.m;saveS();renderMode();renderResult();$('#scanIn').focus&&0};
+function show(code,notFoundMsg){
+  code=nb(code);curCode=code;curItem=code?items.get(code)||null:null;
+  if(!code){renderResult();return}
+  if(curItem){beep(true);recent=[code,...recent.filter(c=>c!==code)].slice(0,10);store.set('bp_recent',recent,true);renderRecent()}
+  else if(notFoundMsg)beep(false);
+  renderResult();
+  clearTimeout(hideT);if(S.autoHide>0&&(curItem||notFoundMsg))hideT=setTimeout(()=>{curCode='';curItem=null;$('#scanIn').value='';renderResult()},S.autoHide*1000);
+}
+function renderResult(){
+  const box=$('#result');
+  if(!curCode){box.innerHTML='<div class="empty">Scan or type a barcode — the price shows automatically.</div>';return}
+  if(!curItem){box.innerHTML=`<div class="res"><div class="nfmsg">Not found</div><div class="code">${esc(curCode)}</div><button class="btn" id="addNF">＋ Add this item</button></div>`;$('#addNF').onclick=()=>{go('entry');addRowWith(curCode)};return}
+  const it=curItem,both=S.mode==='both';
+  let h=`<div class="res ${both?'both':''}"><div class="iname">${esc(it.n)}</div><div class="code">${esc(it.b)}</div>`;
+  if(S.mode==='sell'||both)h+=`<div class="pbox sell"><span class="lbl">SELL PRICE</span><b class="big">${fmt(it.s)}</b></div>`;
+  if(S.mode==='buy'||both)h+=`<div class="pbox buy"><span class="lbl">PURCHASE PRICE</span><b class="big">${fmt(it.p)}</b></div>`;
+  if(both){const pr=it.s-it.p,mg=it.s?pr/it.s*100:0;h+=`<div class="profit ${pr<0?'neg':'pos'}">Profit ${fmt(pr)} · ${mg.toFixed(1)}% margin</div>`}
+  box.innerHTML=h+'</div>';
+}
+function renderRecent(){
+  const r=recent.filter(c=>items.has(c));$('#recentWrap').hidden=!r.length;
+  $('#recent').innerHTML=r.map(c=>`<button class="chip" data-c="${esc(c)}">${esc(items.get(c).n)}</button>`).join('');
+}
+$('#recent').onclick=e=>{const b=e.target.closest('[data-c]');if(b){$('#scanIn').value=b.dataset.c;show(b.dataset.c)}};
+let scanDeb=0;
+$('#scanIn').addEventListener('input',e=>{clearTimeout(scanDeb);const v=nb(e.target.value);if(!v){curCode='';curItem=null;renderResult();return}scanDeb=setTimeout(()=>{if(items.has(v))show(v)},200)});
+$('#scanIn').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();clearTimeout(scanDeb);runScan()}});
+function runScan(){const v=nb($('#scanIn').value);if(!v)return;show(v,true);$('#scanIn').select()}
+$('#goBtn').onclick=runScan;
+$('#camBtn').onclick=()=>{if(Scanner.slot){Scanner.stop();return}Scanner.start($('#camScan'),code=>{$('#scanIn').value=code;show(code,true);if(!S.keepCam)Scanner.stop()})};
+
+/* ---------- ENTRY page ---------- */
+let rows=[],draftT=0,markT=0;
+const newRow=(b='')=>({b,n:'',p:'',s:''});
+const isEmpty=r=>!r.b&&!r.n&&!r.p&&!r.s;
+function loadDraft(){const d=store.get('bp_draft',[]);rows=Array.isArray(d)&&d.length?d.map(r=>Object.assign(newRow(),r)):[newRow(),newRow(),newRow()]}
+const saveDraft=()=>{clearTimeout(draftT);draftT=setTimeout(()=>store.set('bp_draft',rows.filter(r=>!isEmpty(r)),true),300)};
+function rowEl(i){const r=rows[i],d=document.createElement('div');d.className='erow';d.dataset.i=i;
+  d.innerHTML=`<span class="rn">${i+1}</span><input data-f="b" placeholder="Barcode" autocomplete="off" autocapitalize="none" spellcheck="false" enterkeyhint="next" value="${esc(r.b)}"><input data-f="n" placeholder="Item name" autocomplete="off" enterkeyhint="next" value="${esc(r.n)}"><input data-f="p" placeholder="Purchase" inputmode="decimal" autocomplete="off" enterkeyhint="next" value="${esc(r.p)}"><input data-f="s" placeholder="Sell" inputmode="decimal" autocomplete="off" enterkeyhint="next" value="${esc(r.s)}"><button class="x" data-del tabindex="-1" aria-label="Delete row">✕</button><span class="tag"></span>`;return d}
+function renderRows(){const w=$('#erows');w.innerHTML='';rows.forEach((_,i)=>w.appendChild(rowEl(i)));markAll()}
+function addRow(b=''){rows.push(newRow(b));$('#erows').appendChild(rowEl(rows.length-1));markAll()}
+function addRowWith(code){let k=rows.findIndex(isEmpty);if(k<0){addRow();k=rows.length-1}rows[k].b=code;const el=rowDom(k);$('[data-f=b]',el).value=code;commitBarcode(k);saveDraft();markAll();setTimeout(()=>focusCell(k,'n'),60)}
+const rowDom=i=>$(`#erows .erow[data-i="${i}"]`);
+function focusCell(i,f){const el=rowDom(i);if(!el)return;const inp=$(`[data-f="${f}"]`,el);if(inp){inp.focus();inp.select&&inp.select();el.scrollIntoView({block:'center',behavior:'smooth'})}}
+function markAll(){clearTimeout(markT);markT=setTimeout(()=>{
+  const cnt={};rows.forEach(r=>{if(r.b)cnt[r.b]=(cnt[r.b]||0)+1});
+  rows.forEach((r,i)=>{const el=rowDom(i);if(!el)return;const t=$('.tag',el);let s='',c='';
+    if(r.b){if(cnt[r.b]>1){s='⚠ Duplicate barcode in this list';c='dup'}else if(items.has(r.b)){s='↻ Already saved — will be updated';c='upd'}else{s='✚ New item';c='new'}}
+    t.textContent=s;t.className='tag '+c});
+  const n=rows.filter(r=>r.b).length;$('#rowCount').textContent=`${n} barcode${n===1?'':'s'} · ${rows.length} rows`},120)}
+function commitBarcode(i){const r=rows[i];r.b=fixBarcode(r.b);const el=rowDom(i);if(el)$('[data-f=b]',el).value=r.b;
+  if(r.b&&items.has(r.b)&&!r.n&&!r.p&&!r.s){const it=items.get(r.b);r.n=it.n;r.p=String(it.p);r.s=String(it.s);if(el){$('[data-f=n]',el).value=r.n;$('[data-f=p]',el).value=r.p;$('[data-f=s]',el).value=r.s}}}
+function hl(i){const el=rowDom(i);if(el){el.classList.add('hl');setTimeout(()=>el.classList.remove('hl'),1200)}}
+$('#erows').addEventListener('input',e=>{const inp=e.target.closest('[data-f]');if(!inp)return;const row=inp.closest('.erow');rows[+row.dataset.i][inp.dataset.f]=inp.value;row.classList.remove('err');saveDraft();markAll()});
+$('#erows').addEventListener('change',e=>{const inp=e.target.closest('[data-f=b]');if(inp){commitBarcode(+inp.closest('.erow').dataset.i);markAll();saveDraft()}});
+$('#erows').addEventListener('click',e=>{const d=e.target.closest('[data-del]');if(!d)return;const i=+d.closest('.erow').dataset.i;if(rows.length===1)rows[0]=newRow();else rows.splice(i,1);renderRows();saveDraft()});
+$('#erows').addEventListener('keydown',e=>{
+  if(e.key!=='Enter')return;const inp=e.target.closest('[data-f]');if(!inp)return;e.preventDefault();
+  const i=+inp.closest('.erow').dataset.i,f=inp.dataset.f;
+  if(f==='b'){commitBarcode(i);const code=rows[i].b;if(!code)return;
+    const j=rows.findIndex((x,k)=>k!==i&&x.b===code);
+    if(j>=0){beep(false);ui.toast(`Already in row ${j+1}`,true);hl(j);rows[i].b='';inp.value='';markAll();return}
+    beep(true);markAll();saveDraft();
+    if(S.scanFirst){if(i===rows.length-1)addRow();focusCell(i+1,'b')}else focusCell(i,'n');return}
+  if(f==='n')focusCell(i,'p');
+  else if(f==='p')focusCell(i,'s');
+  else{if(i===rows.length-1)addRow();focusCell(i+1,rows[i+1].b?'n':'b')}
+});
+$('#scanFirst').onchange=e=>{S.scanFirst=e.target.checked;saveS()};
+$('#addRow').onclick=()=>{addRow();focusCell(rows.length-1,'b')};
+$('#add10').onclick=()=>{for(let k=0;k<10;k++)rows.push(newRow());renderRows()};
+$('#clearRows').onclick=async()=>{if(rows.every(isEmpty)){return}if(await ui.confirm('Clear everything typed in this list? (Saved items are not affected.)',{ok:'Clear list',danger:true})){rows=[newRow(),newRow(),newRow()];renderRows();store.set('bp_draft',[],true)}};
+$('#eCam').onclick=()=>{if(Scanner.slot){Scanner.stop();return}Scanner.start($('#camEntry'),entryScanned)};
+function entryScanned(code){
+  const j=rows.findIndex(r=>r.b===code);
+  if(j>=0){beep(false);ui.toast(`Already in row ${j+1}`,true);hl(j);return}
+  beep(true);let k=rows.findIndex(isEmpty);if(k<0){addRow();k=rows.length-1}
+  rows[k].b=code;$('[data-f=b]',rowDom(k)).value=code;commitBarcode(k);saveDraft();markAll();
+  const el=rowDom(k);el.scrollIntoView({block:'nearest',behavior:'smooth'});hl(k);ui.toast(`Row ${k+1}: ${code}`);
+}
+$('#saveEntry').onclick=()=>{
+  rows.forEach((_,i)=>commitBarcode(i));
+  const used=rows.map((r,i)=>({r,i})).filter(x=>!isEmpty(x.r));
+  if(!used.length){ui.toast('Nothing to save yet');return}
+  const bad=[];$$('#erows .erow').forEach(e=>e.classList.remove('err'));
+  used.forEach(({r,i})=>{if(!r.b||!r.n.trim()||num(r.p)===null||num(r.s)===null){bad.push(i);rowDom(i).classList.add('err')}});
+  if(bad.length){const i=bad[0],r=rows[i];ui.toast(`${bad.length} row(s) incomplete — fix the red rows`,true);beep(false);focusCell(i,!r.b?'b':!r.n.trim()?'n':num(r.p)===null?'p':'s');return}
+  snapshot('Before data entry save');
+  let nw=0,up=0,now=Date.now();const seen=new Set();let dups=0;
+  used.forEach(({r})=>{if(seen.has(r.b))dups++;seen.add(r.b);const ex=items.get(r.b);items.set(r.b,{b:r.b,n:r.n.trim(),p:num(r.p),s:num(r.s),t:now});if(ex)up++;else nw++});
+  if(!saveItems())return;
+  rows=[newRow(),newRow(),newRow()];renderRows();store.set('bp_draft',[],true);
+  ui.toast(`✔ Saved ${seen.size} items (${nw} new, ${up} updated${dups?`, ${dups} duplicate merged`:''})`);beep(true);renderBanner();
+};
+
+/* ---------- snapshots / backup ---------- */
+function snapshot(label){
+  if(!items.size)return;
+  let s=store.get('bp_snaps',[]);s.unshift({t:Date.now(),label,n:items.size,data:[...items.values()]});s=s.slice(0,3);
+  while(s.length&&!store.set('bp_snaps',s,true))s.pop();
+}
+const makeBackup=()=>({app:'barcode-price-checker',v:1,created:new Date().toISOString(),items:[...items.values()],settings:S,account:store.get('bp_auth',null)});
+function cleanItems(arr){const out=[];(arr||[]).forEach(o=>{if(!o)return;const b=fixBarcode(o.b),n=String(o.n??'').trim(),p=num(o.p),s=num(o.s);if(b&&n&&p!==null&&s!==null)out.push({b,n,p,s,t:o.t||Date.now()})});return out}
+async function readBackupFile(f){let o;try{o=JSON.parse(await f.text())}catch(e){throw new Error('That file is not a valid backup')}
+  if(!o||!Array.isArray(o.items))throw new Error('That file is not a valid backup');return o}
+function applyBackup(o,{mode,account,settings}){
+  snapshot('Before restore');const list=cleanItems(o.items);
+  if(mode==='replace')items=new Map();
+  list.forEach(it=>items.set(it.b,it));
+  saveItems();
+  if(account&&o.account){store.set('bp_auth',o.account);store.set('bp_pwchanged',true)}
+  if(settings&&o.settings){S=Object.assign({},DEF,o.settings);saveS();applyTheme()}
+  return list.length;
+}
+function renderBackup(){
+  $('#bkCount').textContent=items.size;const lb=store.get('bp_lastbk',0);$('#bkLast').textContent=lb?new Date(lb).toLocaleDateString():'never';
+  const f=new File(['{}'],'x.json',{type:'application/json'});$('#bkShare').hidden=!(navigator.canShare&&navigator.canShare({files:[f]}));
+  const s=store.get('bp_snaps',[]);
+  $('#snaps').innerHTML=s.length?s.map((x,i)=>`<div class="item" style="cursor:default"><div class="il"><b>${new Date(x.t).toLocaleString()}</b><small>${esc(x.label)} · ${x.n} items</small></div><button class="btn sm ghost" data-snap="${i}">Restore</button></div>`).join(''):'<div class="empty">None yet</div>';
+}
+function backupBlob(){return new Blob([JSON.stringify(makeBackup())],{type:'application/json'})}
+$('#bkNow').onclick=()=>{download(`price-checker-backup_${stamp()}.json`,backupBlob());store.set('bp_lastbk',Date.now());renderBackup();renderBanner();ui.toast('Backup downloaded — keep the file somewhere safe')};
+$('#bkShare').onclick=async()=>{try{const f=new File([backupBlob()],`price-checker-backup_${stamp()}.json`,{type:'application/json'});await navigator.share({files:[f],title:'Price Checker backup'});store.set('bp_lastbk',Date.now());renderBackup();renderBanner()}catch(e){}};
+$('#bkRestore').onclick=()=>$('#bkFile').click();
+$('#bkFile').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
+  try{const o=await readBackupFile(f);const n=cleanItems(o.items).length;
+    const when=o.created?new Date(o.created).toLocaleString():'unknown date';
+    const c=await ui.choice('Restore backup',`Backup from <b>${esc(when)}</b> contains <b>${n}</b> items.<br>You currently have <b>${items.size}</b> items.<br><br><b>Replace</b> = make the app exactly like the backup.<br><b>Merge</b> = add/update items from the backup, keep the others.`,[{label:'Cancel',cls:'ghost',v:null},{label:'Merge',cls:'ghost',v:'merge'},{label:'Replace',cls:'danger',v:'replace'}]);
+    if(!c)return;const k=applyBackup(o,{mode:c});renderBackup();renderBanner();ui.toast(`✔ Restored ${k} items`)}
+  catch(err){ui.toast(err.message,true)}};
+$('#snaps').onclick=async e=>{const b=e.target.closest('[data-snap]');if(!b)return;const s=store.get('bp_snaps',[])[+b.dataset.snap];if(!s)return;
+  if(await ui.confirm(`Replace current data with this copy from <b>${new Date(s.t).toLocaleString()}</b> (${s.n} items)?`,{ok:'Restore',danger:true})){applyBackup({items:s.data},{mode:'replace'});renderBackup();ui.toast('Restored')}};
+const csvCell=v=>`"${String(v).replace(/"/g,'""')}"`;
+$('#expCsv').onclick=()=>{
+  const lines=['Barcode,Item name,Purchase price,Sell price'];
+  items.forEach(o=>lines.push([csvCell('="'+o.b+'"'),csvCell(o.n),o.p,o.s].join(',')));
+  download(`items_${stamp()}.csv`,new Blob(['﻿'+lines.join('\r\n')],{type:'text/csv'}));ui.toast('CSV exported');
+};
+
+/* ---------- ITEMS page ---------- */
+let iq='',isort='new',shown=100;
+function renderItems(){
+  let a=[...items.values()];const q=iq.trim().toLowerCase();
+  if(q)a=a.filter(o=>o.b.toLowerCase().includes(q)||o.n.toLowerCase().includes(q));
+  if(isort==='name')a.sort((x,y)=>x.n.localeCompare(y.n));else if(isort==='code')a.sort((x,y)=>x.b.localeCompare(y.b));else a.sort((x,y)=>(y.t||0)-(x.t||0));
+  $('#icount').textContent=`${a.length} of ${items.size} items`;
+  $('#ilist').innerHTML=a.slice(0,shown).map(o=>`<div class="item" data-b="${esc(o.b)}"><div class="il"><b>${esc(o.n)}</b><small>${esc(o.b)}</small></div><div class="ir"><div class="sellc">${fmt(o.s)}</div><div class="buyc">${fmt(o.p)}</div></div></div>`).join('')||'<div class="empty">No items yet. Use Entry or Import to add some.</div>';
+  $('#moreBtn').hidden=a.length<=shown;
+}
+let isT=0;$('#isearch').oninput=e=>{iq=e.target.value;shown=100;clearTimeout(isT);isT=setTimeout(renderItems,200)};
+$('#isort').onchange=e=>{isort=e.target.value;renderItems()};
+$('#moreBtn').onclick=()=>{shown+=200;renderItems()};
+$('#addNew').onclick=()=>go('entry');
+$('#ilist').onclick=e=>{const it=e.target.closest('[data-b]');if(it)openEdit(it.dataset.b)};
+function openEdit(b){
+  const it=items.get(b);if(!it)return;
+  const w=document.createElement('div');w.className='modal-wrap';
+  w.innerHTML=`<div class="modal"><h3>Edit item</h3><label class="f">Barcode</label><input id="e-b" value="${esc(it.b)}"><label class="f">Name</label><input id="e-n" value="${esc(it.n)}"><div class="row"><label class="f" style="flex:1">Purchase<input id="e-p" inputmode="decimal" value="${it.p}"></label><label class="f" style="flex:1">Sell<input id="e-s" inputmode="decimal" value="${it.s}"></label></div><div class="msg bad" id="e-err"></div><div class="btnrow"><button class="btn danger-t" data-a="del">Delete</button><button class="btn ghost" data-a="x">Cancel</button><button class="btn" data-a="ok">Save</button></div></div>`;
+  document.body.appendChild(w);
+  w.onclick=async e=>{
+    if(e.target===w){w.remove();return}
+    const a=e.target.closest('[data-a]');if(!a)return;
+    if(a.dataset.a==='x'){w.remove();return}
+    if(a.dataset.a==='del'){if(await ui.confirm(`Delete <b>${esc(it.n)}</b>?`,{ok:'Delete',danger:true})){snapshot('Before delete');items.delete(b);saveItems();w.remove();renderItems();ui.toast('Deleted')}return}
+    const nb2=fixBarcode($('#e-b',w).value),n=$('#e-n',w).value.trim(),p=num($('#e-p',w).value),s=num($('#e-s',w).value),err=m=>$('#e-err',w).textContent=m;
+    if(!nb2||!n)return err('Barcode and name are required');if(p===null||s===null)return err('Enter valid prices');
+    if(nb2!==b&&items.has(nb2))return err('Another item already uses this barcode');
+    snapshot('Before edit');if(nb2!==b)items.delete(b);items.set(nb2,{b:nb2,n,p,s,t:Date.now()});saveItems();w.remove();renderItems();ui.toast('Saved');
+  };
+}
+
+/* ---------- IMPORT ---------- */
+function parseCSV(text){
+  text=text.replace(/^﻿/,'');const first=text.split(/\r?\n/,1)[0],cnt=d=>first.split(d).length-1;
+  let d=',';if(cnt('\t')>0&&cnt('\t')>=cnt(',')&&cnt('\t')>=cnt(';'))d='\t';else if(cnt(';')>cnt(','))d=';';
+  const out=[];let row=[],f='',q=false;
+  for(let i=0;i<text.length;i++){const c=text[i];
+    if(q){if(c==='"'){if(text[i+1]==='"'){f+='"';i++}else q=false}else f+=c}
+    else if(c==='"')q=true;else if(c===d){row.push(f);f=''}else if(c==='\n'){row.push(f);out.push(row);row=[];f=''}else if(c!=='\r')f+=c}
+  if(f!==''||row.length){row.push(f);out.push(row)}return out;
+}
+async function inflateRaw(u8){const s=new Blob([u8]).stream().pipeThrough(new DecompressionStream('deflate-raw'));return new Uint8Array(await new Response(s).arrayBuffer())}
+async function readZip(buf){
+  const u8=new Uint8Array(buf),dv=new DataView(buf);let e=-1;
+  for(let i=u8.length-22;i>=Math.max(0,u8.length-66000);i--){if(dv.getUint32(i,true)===0x06054b50){e=i;break}}
+  if(e<0)throw new Error('zip');
+  const n=dv.getUint16(e+10,true);let p=dv.getUint32(e+16,true);const files={},dec=new TextDecoder();
+  for(let k=0;k<n;k++){if(dv.getUint32(p,true)!==0x02014b50)break;
+    const method=dv.getUint16(p+10,true),cs=dv.getUint32(p+20,true),nl=dv.getUint16(p+28,true),el=dv.getUint16(p+30,true),cl=dv.getUint16(p+32,true),lo=dv.getUint32(p+42,true);
+    files[dec.decode(u8.subarray(p+46,p+46+nl))]={method,cs,lo};p+=46+nl+el+cl}
+  return {files,async get(name){const f=files[name];if(!f)return null;const ln=dv.getUint16(f.lo+26,true),le=dv.getUint16(f.lo+28,true),st=f.lo+30+ln+le,data=u8.subarray(st,st+f.cs);return dec.decode(f.method===0?data:await inflateRaw(data))}};
+}
+async function parseXLSX(buf){
+  if(typeof DecompressionStream==='undefined')throw new Error('This browser cannot read .xlsx directly. Save the sheet as CSV, or paste the rows below.');
+  const z=await readZip(buf),P=s=>new DOMParser().parseFromString(s,'application/xml');
+  let sst=[];const ss=await z.get('xl/sharedStrings.xml');
+  if(ss)sst=[...P(ss).getElementsByTagNameNS('*','si')].map(si=>[...si.getElementsByTagNameNS('*','t')].filter(t=>t.parentNode.localName!=='rPh').map(t=>t.textContent).join(''));
+  let path=null;
+  try{const wb=P(await z.get('xl/workbook.xml')),sh=wb.getElementsByTagNameNS('*','sheet')[0];
+    const rid=sh.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships','id')||sh.getAttribute('r:id');
+    const rel=[...P(await z.get('xl/_rels/workbook.xml.rels')).getElementsByTagNameNS('*','Relationship')].find(r=>r.getAttribute('Id')===rid);
+    if(rel){const t=rel.getAttribute('Target');path=t.startsWith('/')?t.slice(1):'xl/'+t.replace(/^\.\//,'')}}catch(e){}
+  if(!path||!z.files[path])path=Object.keys(z.files).filter(n=>/^xl\/worksheets\/sheet\d+\.xml$/.test(n)).sort()[0];
+  if(!path)throw new Error('No worksheet found in that file');
+  const out=[];
+  for(const r of P(await z.get(path)).getElementsByTagNameNS('*','row')){
+    const arr=[];
+    for(const c of r.getElementsByTagNameNS('*','c')){
+      const m=/^([A-Z]+)/.exec(c.getAttribute('r')||'');let ci=arr.length;
+      if(m){ci=0;for(const ch of m[1])ci=ci*26+ch.charCodeAt(0)-64;ci--}
+      const t=c.getAttribute('t');let val='';
+      if(t==='inlineStr')val=[...c.getElementsByTagNameNS('*','t')].map(x=>x.textContent).join('');
+      else{const v=c.getElementsByTagNameNS('*','v')[0];if(v){val=v.textContent;if(t==='s')val=sst[+val]??''}}
+      while(arr.length<ci)arr.push('');arr[ci]=val;
+    }
+    out.push(arr);
+  }
+  return out;
+}
+let imp={rows:[],header:false,map:[0,1,2,3],blank0:true,mode:'update'};
+async function handleImportFile(f){
+  try{const ext=f.name.split('.').pop().toLowerCase();let r;
+    if(ext==='xlsx')r=await parseXLSX(await f.arrayBuffer());
+    else if(ext==='xls')throw new Error('Old .xls files are not supported. In Excel choose Save As → .xlsx (or CSV) and try again.');
+    else r=parseCSV(await f.text());
+    setImportRows(r)}
+  catch(e){ui.toast(e.message||'Could not read that file',true)}
+}
+function setImportRows(r){
+  r=r.filter(x=>x.some(c=>String(c).trim()!==''));
+  if(!r.length){ui.toast('No rows found',true);return}
+  const h=r[0];imp.rows=r;imp.map=[0,1,2,3];
+  imp.header=/barcode|name|price|item|code|cost|sell|purchase/i.test(h.join(' '))||(num(h[2])===null&&num(h[3])===null&&String(h[2]??'').trim()!=='');
+  renderImport();
+}
+function importRecords(){
+  const out=[];let bad=0;
+  for(let i=imp.header?1:0;i<imp.rows.length;i++){
+    const r=imp.rows[i],b=fixBarcode(r[imp.map[0]]),n=String(r[imp.map[1]]??'').trim();
+    let p=num(r[imp.map[2]]),s=num(r[imp.map[3]]);
+    if(imp.blank0){if(p===null&&String(r[imp.map[2]]??'').trim()==='')p=0;if(s===null&&String(r[imp.map[3]]??'').trim()==='')s=0}
+    out.push(b&&n&&p!==null&&s!==null?{ok:true,b,n,p,s}:{ok:false,b,n,p,s,raw:r});
+  }
+  return out;
+}
+function renderImport(){
+  const box=$('#impPrev');box.hidden=false;
+  const recs=importRecords(),ok=recs.filter(r=>r.ok),bad=recs.length-ok.length;
+  const ex=ok.filter(r=>items.has(r.b)).length;
+  const cols=Math.max(4,...imp.rows.slice(0,50).map(r=>r.length));
+  const hdr=imp.rows[0]||[];
+  const opt=(sel)=>Array.from({length:cols},(_,i)=>`<option value="${i}" ${i===sel?'selected':''}>${String.fromCharCode(65+(i%26))}${i>25?'+':''}${imp.header&&hdr[i]?' – '+esc(String(hdr[i]).slice(0,14)):''}</option>`).join('');
+  const names=['Barcode','Item name','Purchase','Sell'];
+  box.innerHTML=`<h2>Preview</h2>
+  <label class="chk"><input type="checkbox" id="imp-h" ${imp.header?'checked':''}><span>First row is a heading</span></label>
+  <div class="row wrap">${names.map((n,i)=>`<label class="f" style="flex:1;min-width:120px;margin:4px 0">${n}<select data-map="${i}">${opt(imp.map[i])}</select></label>`).join('')}</div>
+  <label class="chk"><input type="checkbox" id="imp-b" ${imp.blank0?'checked':''}><span>Treat empty prices as 0</span></label>
+  <label class="f">If the barcode already exists</label>
+  <select id="imp-m"><option value="update" ${imp.mode==='update'?'selected':''}>Update it with the file's data</option><option value="skip" ${imp.mode==='skip'?'selected':''}>Skip it (keep my current data)</option></select>
+  <div class="stat" style="margin-top:12px"><div><b>${ok.length}</b>ready</div><div><b>${ex}</b>already saved</div><div><b style="color:var(--bad)">${bad}</b>invalid</div></div>
+  <div class="pvwrap"><table class="pv"><tr><th>Barcode</th><th>Name</th><th>Buy</th><th>Sell</th></tr>${recs.slice(0,8).map(r=>r.ok?`<tr><td>${esc(r.b)}</td><td>${esc(r.n)}</td><td>${r.p}</td><td>${r.s}</td></tr>`:`<tr class="skip"><td>${esc(r.b||'?')}</td><td>${esc(r.n||'?')}</td><td>${r.p??'?'}</td><td>${r.s??'?'}</td></tr>`).join('')}</table></div>
+  ${bad?'<p class="msg bad">Invalid rows (missing barcode/name or non-numeric price) will be skipped.</p>':''}
+  <button class="btn big" id="impGo" style="margin-top:12px" ${ok.length?'':'disabled'}>Import ${ok.length} items</button>`;
+  $('#imp-h').onchange=e=>{imp.header=e.target.checked;renderImport()};
+  $('#imp-b').onchange=e=>{imp.blank0=e.target.checked;renderImport()};
+  $('#imp-m').onchange=e=>{imp.mode=e.target.value;renderImport()};
+  $$('[data-map]',box).forEach(s=>s.onchange=()=>{imp.map[+s.dataset.map]=+s.value;renderImport()});
+  $('#impGo').onclick=()=>{
+    snapshot('Before import');let nw=0,up=0,sk=0;const now=Date.now();
+    ok.forEach(r=>{const has=items.has(r.b);if(has&&imp.mode==='skip'){sk++;return}items.set(r.b,{b:r.b,n:r.n,p:r.p,s:r.s,t:now});has?up++:nw++});
+    if(saveItems()){ui.toast(`✔ Imported: ${nw} new, ${up} updated${sk?`, ${sk} skipped`:''}${bad?`, ${bad} invalid`:''}`);beep(true);box.hidden=true;imp.rows=[];renderBanner()}
+  };
+}
+const dz=$('#dz');
+dz.onclick=()=>$('#impFile').click();
+$('#impFile').onchange=e=>{const f=e.target.files[0];e.target.value='';if(f)handleImportFile(f)};
+['dragover','dragenter'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add('over')}));
+['dragleave','drop'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove('over')}));
+dz.addEventListener('drop',e=>{const f=e.dataTransfer.files[0];if(f)handleImportFile(f)});
+$('#impPasteGo').onclick=()=>{const t=$('#impPaste').value;if(!t.trim()){ui.toast('Paste some rows first',true);return}setImportRows(parseCSV(t))};
+$('#tplBtn').onclick=()=>download('import-template.csv',new Blob(['﻿Barcode,Item name,Purchase price,Sell price\r\n"=""8901234567890""",Sample soap,45,60\r\n"=""6291041500213""",Sample juice 1L,120,150\r\n'],{type:'text/csv'}));
+
+/* ---------- PRICE BY PHOTO (optional) : Claude vision names the products, the app matches them to your items ---------- */
+const PROMPT='You are helping a shop owner price items. Look at the photo and list every distinct retail product you can see (ignore people and background). For each product give: brand, product name, variant/flavour/size exactly as printed when readable, any other readable text, and how many identical units are visible. Reply with ONLY a JSON array and nothing else, like: [{"brand":"","name":"","size":"","other_text":"","count":1}]. If no products are visible reply [].';
+let ph={img:'',found:[],busy:false,err:''};
+const syncPhotoBtn=()=>{$('#photoBtn').hidden=!S.photoOn};
+const tok=s=>String(s||'').toUpperCase().replace(/(\d)\.(\d)/g,'$1P$2').replace(/\b(LITRES?|LITERS?)\b/g,'LTR').replace(/[^A-Z0-9]+/g,' ').split(' ').filter(t=>t.length>=2);
+function buildIdx(){
+  const arr=[...items.values()],df=new Map();
+  const toks=arr.map(it=>{const t=new Set(tok(it.n));t.forEach(x=>df.set(x,(df.get(x)||0)+1));return t});
+  IDX={arr,toks,df,N:arr.length};
+}
+function matchItems(q,limit=4){
+  if(!items.size)return [];
+  if(!IDX)buildIdx();
+  const {arr,toks,df,N}=IDX,w=t=>Math.log(1+N/df.get(t));
+  const qk=[...new Set(tok(q))].filter(t=>df.has(t));
+  if(!qk.length)return [];
+  const qW=qk.reduce((a,t)=>a+w(t),0),res=[];
+  for(let i=0;i<arr.length;i++){
+    const ts=toks[i];let m=0;
+    for(const t of qk)if(ts.has(t))m+=w(t);
+    if(m>0){let iW=0;ts.forEach(t=>iW+=w(t));res.push([m/(qW+iW-m),i])}
+  }
+  res.sort((a,b)=>b[0]-a[0]);
+  return res.slice(0,limit).filter(r=>r[0]>0.08).map(r=>({it:arr[r[1]],score:r[0]}));
+}
+const PhotoCam={
+  stream:null,slot:null,
+  async start(slot){
+    Scanner.stop();this.stop();this.slot=slot;slot.hidden=false;
+    slot.innerHTML='<div class="cam"><video playsinline muted autoplay></video><div class="camtools"><button class="btn sm" data-ph="shot">📸 Take photo</button><button class="btn sm ghost" data-ph="file">🖼 Gallery</button><button class="btn sm danger" data-ph="close">✕</button></div><div class="camstat">Show the item(s) with labels facing the camera, then tap Take photo</div></div><input type="file" accept="image/*" hidden id="phFile">';
+    $('#phFile',slot).onchange=e=>{const f=e.target.files[0];e.target.value='';if(f)this.fromFile(f)};
+    const st=t=>{const el=$('.camstat',slot);if(el)el.textContent=t};
+    if(!window.isSecureContext||!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){st('Camera not available — use Gallery to pick a photo');return}
+    try{this.stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:S.facing},width:{ideal:1280},height:{ideal:960}},audio:false})}
+    catch(e){st('Camera permission denied — use Gallery to pick a photo');return}
+    if(this.slot!==slot){this.stream.getTracks().forEach(t=>t.stop());this.stream=null;return}
+    const v=$('video',slot);v.srcObject=this.stream;try{await v.play()}catch(e){}
+  },
+  shot(){const v=this.slot&&$('video',this.slot);if(!v||!v.videoWidth){ui.toast('Camera not ready yet',true);return}processPhoto(toJpeg(v,v.videoWidth,v.videoHeight))},
+  async fromFile(f){
+    try{let bmp;
+      try{bmp=await createImageBitmap(f)}catch(e){bmp=await new Promise((res,rej)=>{const im=new Image();im.onload=()=>res(im);im.onerror=rej;im.src=URL.createObjectURL(f)})}
+      processPhoto(toJpeg(bmp,bmp.width||bmp.naturalWidth,bmp.height||bmp.naturalHeight));
+    }catch(e){ui.toast('Could not read that picture',true)}
+  },
+  stop(){if(this.stream){this.stream.getTracks().forEach(t=>t.stop());this.stream=null}if(this.slot){this.slot.innerHTML='';this.slot.hidden=true;this.slot=null}}
+};
+function toJpeg(src,w,h){const k=Math.min(1,1024/Math.max(w,h)),c=document.createElement('canvas');c.width=Math.round(w*k);c.height=Math.round(h*k);c.getContext('2d').drawImage(src,0,0,c.width,c.height);return c.toDataURL('image/jpeg',0.8)}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-ph]');if(!b)return;const a=b.dataset.ph;if(a==='close')PhotoCam.stop();else if(a==='shot')PhotoCam.shot();else if(a==='file'){const f=$('#phFile',PhotoCam.slot);f&&f.click()}});
+$('#photoBtn').onclick=()=>{
+  if(PhotoCam.slot){PhotoCam.stop();return}
+  if(!store.get('bp_apikey','')){ui.toast('Add your API key first (Settings → Price by photo)',true);go('settings');return}
+  if(!items.size){ui.toast('Add or import items first',true);return}
+  PhotoCam.start($('#camPhoto'));
+};
+async function askClaude(b64,key){
+  const ctl=new AbortController(),to=setTimeout(()=>ctl.abort(),60000);
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',signal:ctl.signal,
+      headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:S.photoModel,max_tokens:1200,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},{type:'text',text:PROMPT}]}]})});
+    if(!r.ok){let m='';try{m=(await r.json()).error.message}catch(e){}
+      throw new Error(r.status===401?'Invalid API key':r.status===429?'Too many requests — wait a minute and try again':r.status===400&&/credit/i.test(m)?'Your API account has no credit left':`Service error (${r.status}) ${m}`)}
+    const j=await r.json();return (j.content||[]).map(c=>c.text||'').join('');
+  }catch(e){
+    if(e.name==='AbortError')throw new Error('Timed out — try again');
+    if(e instanceof TypeError)throw new Error('No internet connection');
+    throw e;
+  }finally{clearTimeout(to)}
+}
+async function processPhoto(url){
+  PhotoCam.stop();
+  ph={img:url,found:[],busy:true,err:''};renderPhoto();
+  try{
+    const txt=await askClaude(url.split(',')[1],store.get('bp_apikey',''));
+    let arr=[];const a=txt.indexOf('['),b=txt.lastIndexOf(']');
+    try{if(a>=0&&b>a)arr=JSON.parse(txt.slice(a,b+1))}catch(e){throw new Error('Could not read the AI answer — please try again')}
+    ph.found=arr.filter(x=>x&&typeof x==='object').slice(0,12).map(x=>{
+      const label=[x.brand,x.name,x.size].filter(Boolean).join(' ').trim()||String(x.other_text||'Item');
+      const q=[x.brand,x.name,x.size,x.other_text].filter(Boolean).join(' ');
+      const cands=matchItems(q);
+      return {label,q,count:Math.max(1,parseInt(x.count)||1),cands,sel:cands.length?0:-1};
+    });
+    beep(ph.found.length>0);
+  }catch(e){ph.err=e.message||'Could not analyse the photo';beep(false)}
+  ph.busy=false;renderPhoto();
+  $('#photoRes').scrollIntoView({block:'nearest',behavior:'smooth'});
+}
+function priceHtml(it){
+  if(S.mode==='buy')return `<span class="pp"><b class="buyc">${fmt(it.p)}</b></span>`;
+  if(S.mode==='both')return `<span class="pp"><b class="sellc">${fmt(it.s)}</b><br><small class="buyc">buy ${fmt(it.p)}</small></span>`;
+  return `<span class="pp"><b class="sellc">${fmt(it.s)}</b></span>`;
+}
+function renderPhoto(){
+  const box=$('#photoRes');
+  if(!ph.img){box.hidden=true;return}
+  box.hidden=false;
+  let h=`<div class="row between"><h2>🖼 Price by photo</h2><button class="btn sm ghost" data-a="close">✕ Close</button></div><img class="phimg" src="${ph.img}" alt="">`;
+  if(ph.busy)h+='<div class="empty">Looking at the photo…</div>';
+  else if(ph.err)h+=`<div class="msg bad">${esc(ph.err)}</div>`;
+  else if(!ph.found.length)h+='<div class="empty">No products recognised. Try a closer photo with the labels facing the camera.</div>';
+  ph.found.forEach((f,i)=>{
+    h+=`<div class="phitem"><div class="phlab">🔎 ${esc(f.label)}</div>`;
+    f.cands.forEach((c,j)=>{h+=`<button class="cand ${f.sel===j?'on':''}" data-a="pick" data-i="${i}" data-c="${j}"><span>${esc(c.it.n)}</span>${priceHtml(c.it)}</button>`});
+    h+=`<button class="cand ${f.sel===-1?'on':''}" data-a="none" data-i="${i}"><span class="mu">${f.cands.length?'None of these':'No match found'}</span></button>`;
+    h+=`<div class="row" style="margin-top:6px"><input data-q="${i}" placeholder="Search this item by name…"><button class="btn sm" data-a="search" data-i="${i}">Search</button></div>`;
+    h+=`<div class="stepper"><span class="mu">Quantity</span><button data-a="minus" data-i="${i}">−</button><span>${f.count}</span><button data-a="plus" data-i="${i}">＋</button></div></div>`;
+  });
+  if(!ph.busy&&ph.found.length){
+    let ts=0,tp=0,n=0;ph.found.forEach(f=>{const c=f.cands[f.sel];if(c){ts+=c.it.s*f.count;tp+=c.it.p*f.count;n+=f.count}});
+    const line=S.mode==='buy'?`Total purchase: <span class="buyc">${fmt(tp)}</span>`:S.mode==='both'?`Total sell: <span class="sellc">${fmt(ts)}</span><br>Total purchase: <span class="buyc">${fmt(tp)}</span>`:`Total sell: <span class="sellc">${fmt(ts)}</span>`;
+    h+=`<div class="ptotal">${n} item${n===1?'':'s'}<br>${line}</div>`;
+  }
+  h+='<button class="btn ghost wide" data-a="again" style="margin-top:10px">📸 Take another photo</button>';
+  box.innerHTML=h;
+}
+$('#photoRes').addEventListener('click',e=>{
+  const t=e.target.closest('[data-a]');if(!t)return;const a=t.dataset.a,f=ph.found[+t.dataset.i];
+  if(a==='close'){ph={img:'',found:[],busy:false,err:''};renderPhoto();return}
+  if(a==='again'){ph={img:'',found:[],busy:false,err:''};renderPhoto();PhotoCam.start($('#camPhoto'));return}
+  if(!f)return;
+  if(a==='pick')f.sel=+t.dataset.c;
+  else if(a==='none')f.sel=-1;
+  else if(a==='plus')f.count++;
+  else if(a==='minus')f.count=Math.max(1,f.count-1);
+  else if(a==='search'){const v=$(`[data-q="${t.dataset.i}"]`,$('#photoRes')).value;const c=matchItems(v,6);if(!c.length)ui.toast('No matching item',true);else{f.cands=c;f.sel=0}}
+  renderPhoto();
+});
+$('#photoRes').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.matches('[data-q]')){const b=$(`[data-a=search][data-i="${e.target.dataset.q}"]`,$('#photoRes'));b&&b.click()}});
+$('#s-photo').onchange=e=>{S.photoOn=e.target.checked;saveS();syncPhotoBtn()};
+$('#s-key').oninput=e=>store.set('bp_apikey',e.target.value.trim());
+$('#s-keyshow').onchange=e=>{$('#s-key').type=e.target.checked?'text':'password'};
+$('#s-model').onchange=e=>{S.photoModel=e.target.value;saveS()};
+
+/* ---------- SETTINGS ---------- */
+function renderSettings(){
+  applyTheme();$('#s-fs').checked=fsOn();$('#s-cur').value=S.cur;$('#s-sound').checked=S.sound;$('#s-vib').checked=S.vibrate;$('#s-keep').checked=S.keepCam;$('#s-face').value=S.facing;$('#s-hide').value=String(S.autoHide);$('#s-photo').checked=!!S.photoOn;$('#s-key').value=store.get('bp_apikey','');$('#s-model').value=S.photoModel;
+  const a=store.get('bp_auth',{u:''});$('#a-user').value=a.u;
+  $('#storeNote').textContent=storageOK?`${items.size} items stored in this browser on this device.`:'⚠ Browser storage is not available — your data will not be kept.';
+}
+$('#s-cur').oninput=e=>{S.cur=e.target.value;saveS()};
+$('#s-sound').onchange=e=>{S.sound=e.target.checked;saveS();if(S.sound)beep(true)};
+$('#s-vib').onchange=e=>{S.vibrate=e.target.checked;saveS();if(S.vibrate&&navigator.vibrate)navigator.vibrate(60)};
+$('#s-keep').onchange=e=>{S.keepCam=e.target.checked;saveS()};
+$('#s-face').onchange=e=>{S.facing=e.target.value;saveS()};
+$('#s-hide').onchange=e=>{S.autoHide=+e.target.value;saveS()};
+$('#a-save').onclick=async()=>{
+  const m=(t,bad=true)=>{const el=$('#a-msg');el.textContent=t;el.className='msg '+(bad?'bad':'good')};
+  const a=store.get('bp_auth'),cp=$('#a-cur').value,nu=$('#a-user').value.trim(),np=$('#a-new').value,nc=$('#a-con').value;
+  if(await hash(cp,a.salt,a.alg)!==a.h)return m('Current password is wrong');
+  if(!nu)return m('Username cannot be empty');
+  if(np&&np.length<4)return m('New password must be at least 4 characters');
+  if(np&&np!==nc)return m('New passwords do not match');
+  store.set('bp_auth',await mkAuth(nu,np||cp));store.set('bp_pwchanged',true);store.set('bp_firstrun',false);
+  ['#a-cur','#a-new','#a-con'].forEach(s=>$(s).value='');m('✔ Login updated',false);ui.toast('Login updated');
+};
+$('#wipe').onclick=async()=>{
+  if(!items.size){ui.toast('Nothing to delete');return}
+  if(await ui.confirm(`This deletes all <b>${items.size}</b> items. A safety copy is kept in Backup → Automatic safety copies.<br><br>Type <b>DELETE</b> to confirm.`,{ok:'Delete everything',danger:true,input:'DELETE',title:'Delete all items'})){
+    snapshot('Before delete all');items=new Map();saveItems();renderSettings();renderBanner();ui.toast('All items deleted')}
+};
+
+/* ---------- init ---------- */
+(async function init(){
+  await initStorage();
+  applyTheme();loadItems();loadDraft();renderRows();$('#scanFirst').checked=!!S.scanFirst;
+  if(!store.get('bp_auth',null)){store.set('bp_auth',await mkAuth('admin','admin'))}
+  if(sess.get())showApp();else showLogin();
+})();
+})();
+</script>
+</body>
+</html>
