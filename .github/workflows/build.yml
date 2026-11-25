@@ -23,8 +23,20 @@ jobs:
       - name: Install packages
         run: npm install
 
-      - name: Copy barcode scanner library into the app
-        run: cp node_modules/@zxing/library/umd/index.min.js www/zxing.min.js
+      - name: Prepare app files
+        run: |
+          mkdir -p www
+          if [ ! -f www/index.html ]; then
+            if [ -f index.html ] && grep -q "initStorage" index.html; then
+              echo "www/index.html not found - using index.html from the repo root"
+              cp index.html www/index.html
+            else
+              echo "ERROR: www/index.html is missing. Upload the www folder (it must contain index.html)."
+              exit 1
+            fi
+          fi
+          cp node_modules/@zxing/library/umd/index.min.js www/zxing.min.js
+          ls -la www
 
       - name: Create Android project
         run: npx cap add android
